@@ -35,6 +35,7 @@ namespace SaveLoadNS
         private Chart mainChart;
         private SerialPort serialPort;
         private delegate void newComDataEventHandler(string text);
+        private DispatcherTimer timer;
 
         /// <summary>
         /// List of available handshakes
@@ -98,8 +99,7 @@ namespace SaveLoadNS
 
         public MainWindow()
         {
-            InitializeComponent();
-            
+            InitializeComponent(); 
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace SaveLoadNS
         private void mainLoaded(object sender, RoutedEventArgs e)
         {
             initDefaults();
-
+            initUpdateTimer();
             COMReadLine = new EventWaitHandle(false, EventResetMode.ManualReset);
             //simulate COM with dispatcher timer event
             //initSimulatedCOM();
@@ -137,7 +137,7 @@ namespace SaveLoadNS
             comboBoxParity.Items.Clear();
             comboBoxParity.ItemsSource = Paritys;
             comboBoxParity.SelectedIndex = 0;
-
+            
             comboBoxStopBits.Items.Clear();
             comboBoxStopBits.ItemsSource = Stopbits;
             comboBoxStopBits.SelectedIndex = 1;
@@ -301,9 +301,19 @@ namespace SaveLoadNS
         private void newData(string data)
         {
             //glue new data to old data at raw data textbox
+            int textBoxRawBufferSize = 1000;
 
-            textBoxRaw.AppendText("\n" + data);
-            textBoxRaw.ScrollToEnd();
+            textBoxRaw.AppendText("\n" + data); //append data
+
+            if (textBoxRaw.Text.Length > textBoxRawBufferSize) //remove overleft
+            {
+                textBoxRaw.Clear();
+                //Debug.WriteLine("cut! " + textBoxRaw.Text.Length);
+                //textBoxRaw.Text = textBoxRaw.Text.Substring(textBoxRaw.Text.Length - 1 - textBoxRawBufferSize, textBoxRawBufferSize);//textBoxRaw.Text.Substring(textBoxRaw.Text.Length - textBoxRawBufferSize, textBoxRaw.Text.Length - 1);
+                
+            }
+            
+            textBoxRaw.ScrollToEnd(); //scroll to end
 
             //loop trough all signals
             foreach (Signal sig in listBoxSignals.Items)
@@ -316,7 +326,20 @@ namespace SaveLoadNS
                     {
                         double value = Double.Parse(sig.parseData(data));
                         if (data.Length > 0)
-                            sig.series.Points.Add(value);
+                        {
+                            //increase element index
+                            sig.seriesTemp.index++;
+
+                            //if element index > size increase size
+                            if (sig.seriesTemp.index == sig.seriesTemp.buffer.Length)
+                            {
+                                Array.Resize<double>(ref sig.seriesTemp.buffer, sig.seriesTemp.buffer.Length + 100); //increase by 100
+                                Debug.WriteLine("Buffer extended for " + sig.title + "new buffer size = " + sig.seriesTemp.buffer.Length,"WARNING");
+                            }
+
+                            //store value
+                            sig.seriesTemp.buffer[sig.seriesTemp.index] = value;
+                        }
                     }
                     catch
                     {
@@ -325,6 +348,10 @@ namespace SaveLoadNS
                 }
             }
         }
+
+
+
+
 
         private void newComData(object sender, EventArgs e)
         {
@@ -353,35 +380,41 @@ namespace SaveLoadNS
             }
         }
 
-        /// <summary>
-        /// Setup timers for COM events
+        /// <summary> Update Timer
+        /// starts timer to update plot
         /// </summary>
-        private void initSimulatedCOM()
+        private void initUpdateTimer()
         {
-            DispatcherTimer timer1 = new DispatcherTimer();
-            timer1.Interval = TimeSpan.FromMilliseconds(50);
-            timer1.Tick += new EventHandler(timerTick);
-            //timer1.Start();
-
-            statusBarItem1.Content = "Not connected.";
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(20);
+            timer.Tick += new EventHandler(timerTick);
+            timer.Start();
         }
 
-
-        /// <summary>
+        /// <summary> timerTick
         /// Create something to send to the newData() function
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void timerTick(object sender, EventArgs e)
         {
-            //MessageBox.Show("asdasd");
-            Random rand = new Random();
+            //loop trough all signals
+            foreach (Signal sig in listBoxSignals.Items)
+            {
+                //check if signal matches
+                if (sig.seriesTemp.index != -1)
+                {
+                    //temp array to hold all meaningful data
+                    double[] tempData = new double[sig.seriesTemp.index+1];
 
-            //string data = "ch" + rand.Next(0,5) + ":" +  rand.NextDouble().ToString();
-            string data = "ch1:" + rand.NextDouble().ToString();
+                    //copy data to temp
+                    Array.Copy(sig.seriesTemp.buffer, tempData, sig.seriesTemp.index+1);
+                    sig.seriesTemp.index = -1; //empty
 
-            //trigger new data function
-            newData(data);
+                    //add points to the plot
+                    sig.series.Points.Add(tempData);
+                }
+            }
         }
         #endregion
 

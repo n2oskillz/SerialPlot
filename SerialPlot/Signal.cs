@@ -9,6 +9,15 @@ using System.Windows.Media;
 
 namespace SaveLoadNS
 {
+    /// <summary>
+    /// holds data buffer
+    /// </summary>
+    public struct tempBuffer
+    {
+        public double[] buffer;
+        public int index;
+    }
+
     public class Signal //luokan oltava public jos sitä käytetään public-luokkana muualla
     {
         #region regExp objects
@@ -70,6 +79,7 @@ namespace SaveLoadNS
         /// Save plot data here
         /// </summary>
         public Series series { get; set; }
+        public tempBuffer seriesTemp;// { get; set; }
 
         /// <summary>
         /// Save title for plot here
@@ -87,6 +97,10 @@ namespace SaveLoadNS
             chartArea = new ChartArea("chartArea:" + timeStamp);
             series = new Series("series:" + timeStamp);
             series.ChartType = SeriesChartType.Line;
+
+            seriesTemp.buffer = new double[100];
+            seriesTemp.index = -1;
+
             lineColor = "Black"; //default color
             title = new Title();
             title.Name = "title:" + timeStamp; //set name to 

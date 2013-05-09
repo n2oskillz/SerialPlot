@@ -1,0 +1,61 @@
+﻿<Window x:Class="SaveLoadNS.signalWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Specify signal"
+        Height="Auto"
+        Width="Auto"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen"
+        KeyDown="keyDown"
+        Topmost="True"
+        WindowStyle="SingleBorderWindow"
+        Loaded="signalWindow_loaded">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200*" />
+            <ColumnDefinition Width="200*" />
+        </Grid.ColumnDefinitions>
+        <Button Content="OK" Grid.Row="7" Name="buttonOK" Margin="10" VerticalAlignment="Center" Click="buttonOK_Click" />
+        <Button Content="Cancel" Grid.Column="1" Grid.Row="7" Name="buttonCancel" Margin="10" VerticalAlignment="Center" Click="buttonCancel_Click" />
+        <TextBlock Text="Title" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" />
+        <TextBlock Grid.Row="1" Text="X-title" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" />
+        <TextBlock Grid.Row="2" Text="Y-title" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" />
+        <TextBlock Grid.Row="3" Text="Regex Match" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" />
+        <TextBlock Grid.Row="4" Text="Regex Parse" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" />
+        <TextBlock Grid.Row="5" Text="Color" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5" />
+        <TextBox Grid.Column="1" Name="textBoxTitle" VerticalAlignment="Center" MinWidth="100" Text="Signal" />
+        <TextBox Grid.Column="1" Grid.Row="1" Name="textBoxXTitle" VerticalAlignment="Center" MinWidth="100" Text="X-Axis" />
+        <TextBox Grid.Column="1" Grid.Row="2" Name="textBoxYTitle" VerticalAlignment="Center" MinWidth="100" Text="Y-Axis" />
+        <TextBox Grid.Column="1" Grid.Row="3" Name="textBoxRegExpMatch" VerticalAlignment="Center" MinWidth="100" Text="[0-9]" />
+        <TextBox Grid.Column="1" Grid.Row="4" Name="textBoxRegExpParse" VerticalAlignment="Center" MinWidth="100" Text="(?&lt;= ).*"/>
+        <ComboBox Grid.Column="1" Grid.Row="5" Name="comboBoxColor"     VerticalAlignment="Center" MinWidth="150" HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Border BorderBrush="Black"
+                             BorderThickness="1"
+                             CornerRadius="3"
+                             Margin="0,2,3,2"
+                             Background="{Binding}"
+                             Width="30"
+                             Height="18">
+                        </Border>
+                        <TextBlock Margin="0,2,0,0"
+                                   Text="{Binding}"
+                        />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+    </Grid>
+</Window>

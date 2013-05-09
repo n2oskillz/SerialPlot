@@ -1,0 +1,21 @@
+﻿<Window x:Class="SaveLoadNS.autoDetectBaudRate"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Auto detecting baudrate..." Height="Auto" Width="Auto" ResizeMode="NoResize" SizeToContent="WidthAndHeight" WindowStyle="None" WindowStartupLocation="CenterOwner" Background="#FFAAAAAA">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="134*" />
+            <ColumnDefinition Width="144*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Baudrate:" Margin="5" />
+        <TextBlock Name="textBlock_baudRate" Text="300" Grid.Column="1" Margin="5" TextAlignment="Center" MinWidth="50" />
+        <TextBlock Grid.Row="1" Text="ASCII characters:" Margin="5" />
+        <TextBlock Grid.Column="1" Grid.Row="1" Name="textBlock_sumASCII" Text="0/5" Margin="5" TextAlignment="Center" />
+        <ProgressBar Grid.ColumnSpan="2" Grid.Row="2" Name="progressBar" Margin="5" MinHeight="20" />
+    </Grid>
+</Window>

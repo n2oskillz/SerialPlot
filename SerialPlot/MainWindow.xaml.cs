@@ -37,8 +37,14 @@ namespace SaveLoadNS
         private delegate void newComDataEventHandler(string text);
         private DispatcherTimer timer;
 
-        /// <summary>
-        /// List of available handshakes
+
+        /* ----------------------------
+         * 
+         *      SERIAL PORT LISTS
+         * handshakes/paritys/stopbits
+         * 
+         * -----------------------------*/
+        /// <summary> List of available handshakes
         /// </summary>
         private List<string> Handshakes
         {
@@ -56,8 +62,7 @@ namespace SaveLoadNS
             }
         }
 
-        /// <summary>
-        /// List of available Paritys
+        /// <summary> List of available Paritys
         /// </summary>
         private List<string> Paritys
         {
@@ -75,8 +80,7 @@ namespace SaveLoadNS
             }
         }
 
-        /// <summary>
-        /// List of available Stopbits
+        /// <summary> List of available Stopbits
         /// </summary>
         private List<string> Stopbits
         {
@@ -95,26 +99,16 @@ namespace SaveLoadNS
         }
 
 
-
-
         public MainWindow()
         {
             InitializeComponent(); 
         }
 
-        /// <summary>
-        /// This function is triggered right after when main window is loaded
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void mainLoaded(object sender, RoutedEventArgs e)
         {
             initDefaults();
-            initUpdateTimer();
+            updateTimerDataReceived();
             COMReadLine = new EventWaitHandle(false, EventResetMode.ManualReset);
-            //simulate COM with dispatcher timer event
-            //initSimulatedCOM();
-            
         }
 
         /// <summary>
@@ -147,11 +141,17 @@ namespace SaveLoadNS
             comboBoxHandshake.SelectedIndex = 0;
         }
 
+
+
+        /* -----------------------
+         * 
+         * PLOT AREA MANIPULATION
+         *    add/remove/update
+         * 
+         * -----------------------*/
         #region Signals to plot
-        /// <summary>
-        /// Use this to delete signal from plot
+        /// <summary> DELETE PLOT SIGNAL
         /// </summary>
-        /// <param name="signal"></param>
         private void deleteSignalFromPlot(Signal signal)
         {
             //remove title
@@ -173,11 +173,8 @@ namespace SaveLoadNS
                 Debug.WriteLine("deletedSignalFromPlot: tried to remove non existent item" + signal.chartArea.Name, "ERROR");
         }
 
-
-        /// <summary>
-        /// Use this function to add signal to plot
+        /// <summary> ADD PLOT SIGNAL
         /// </summary>
-        /// <param name="signal"></param>
         private void setSignalToPlot(Signal signal)
         {
             //find if there is signal named that
@@ -190,13 +187,9 @@ namespace SaveLoadNS
                 mainChart.Titles[mainChart.Titles.Count - 1].DockedToChartArea = signal.chartArea.Name;
             }
         }
-        
 
-        /// <summary>
-        /// Run this function when selection changes
+        /// <summary> UPDATED SELECTION
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void listBoxSignal_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             //go trough all signals and set selected signals to plot
@@ -222,11 +215,17 @@ namespace SaveLoadNS
         }
         #endregion
 
+
+
+        /*---------------------
+         * 
+         * SIGNAL MODIFICATION
+         *     add / edit
+         *     
+         *---------------------*/
         #region Adding and editing signals
-        /// <summary>
-        /// This function opens specify signal window so user can add signal
+        /// <summary> Add Signal
         /// </summary>
-        /// <returns></returns>
         private Signal querySignal()
         {
             signalWindow signalDialog = new signalWindow(false);
@@ -235,11 +234,8 @@ namespace SaveLoadNS
         }
        
 
-        /// <summary>
-        /// This function is called when signal is to be edited
+        /// <summary> Edit signal button
         /// </summary>
-        /// <param name="sig"></param>
-        /// <returns></returns>
         private Signal editSignal(Signal sig)
         {
             //start dialog
@@ -264,8 +260,7 @@ namespace SaveLoadNS
         }
 
 
-        /// <summary>
-        /// Go trough all selected signals and call edit function on them
+        /// <summary> Edit multiple signals
         /// </summary>
         private void editSignals()
         {
@@ -293,48 +288,47 @@ namespace SaveLoadNS
         }
         #endregion
 
+
+
+
+
+        /* -------------------
+         * 
+         * DATA MANIPULATION
+         * event,parse,update
+         *  
+         * -------------------*/
         #region incoming data manipulation
-        /// <summary>
-        /// This function is called for every new line from COM or simulated COM
+        /// <summary> Input data parser
         /// </summary>
-        /// <param name="data"></param>
-        private void newData(string data)
+        private void parseDataReceived(string data)
         {
-            //glue new data to old data at raw data textbox
-            int textBoxRawBufferSize = 1000;
+            int textBoxRawBufferSize = 1000;                    //glue new data to old data at raw data textbox
 
-            textBoxRaw.AppendText("\n" + data); //append data
+            textBoxRaw.AppendText("\n" + data);                 //append data
 
-            if (textBoxRaw.Text.Length > textBoxRawBufferSize) //remove overleft
-            {
+            if (textBoxRaw.Text.Length > textBoxRawBufferSize)  //remove overleft TODO nicer!
                 textBoxRaw.Clear();
-                //Debug.WriteLine("cut! " + textBoxRaw.Text.Length);
-                //textBoxRaw.Text = textBoxRaw.Text.Substring(textBoxRaw.Text.Length - 1 - textBoxRawBufferSize, textBoxRawBufferSize);//textBoxRaw.Text.Substring(textBoxRaw.Text.Length - textBoxRawBufferSize, textBoxRaw.Text.Length - 1);
-                
-            }
-            
-            textBoxRaw.ScrollToEnd(); //scroll to end
+            else
+                textBoxRaw.ScrollToEnd();
 
             //loop trough all signals
             foreach (Signal sig in listBoxSignals.Items)
             {
-                //check if signal matches
-                if (sig.checkMatch(data))
+                if (sig.checkMatch(data))   //check if signal matches
                 {
-                    //parse the value
-                    try
+                    double value;
+                    try                     //parse the value
                     {
-                        double value = Double.Parse(sig.parseData(data));
+                        value = Double.Parse(sig.parseData(data));
                         if (data.Length > 0)
                         {
-                            //increase element index
-                            sig.seriesTemp.index++;
+                            sig.seriesTemp.index++; //increase element index
 
-                            //if element index > size increase size
-                            if (sig.seriesTemp.index == sig.seriesTemp.buffer.Length)
+                            if (sig.seriesTemp.index == sig.seriesTemp.buffer.Length) //if element index > size increase size
                             {
                                 Array.Resize<double>(ref sig.seriesTemp.buffer, sig.seriesTemp.buffer.Length + 100); //increase by 100
-                                Debug.WriteLine("Buffer extended for " + sig.title + "new buffer size = " + sig.seriesTemp.buffer.Length,"WARNING");
+                                Debug.WriteLine("Buffer extended for " + sig.title + " new buffer size = " + sig.seriesTemp.buffer.Length,"WARNING");
                             }
 
                             //store value
@@ -349,28 +343,20 @@ namespace SaveLoadNS
             }
         }
 
-
-
-
-
-        private void newComData(object sender, EventArgs e)
+        /// <summary> Received data handler
+        /// </summary>
+        private void serialDataReceived(object sender, EventArgs e)
         {
-            string receivedText;
+            COMReadLine.Reset();    //disable access to serialPort
+            string receivedText;    //hold incoming message here
 
-            try
+            try    //read new data
             {
-                //read new data
                 if (serialPort.IsOpen)
                 {
-                    COMReadLine.Reset(); //disable access to serialPort
-                    receivedText = serialPort.ReadLine();
-                    COMReadLine.Set(); //allow access to serialPort i.e. serialPort.Close();
-                    Thread.Sleep(0);//release execution for waiting close
-
-                    //invoke newData asynchronously from mainthread to add the data
-                    Dispatcher.BeginInvoke(DispatcherPriority.Send, new newComDataEventHandler(newData), receivedText);
+                    receivedText = serialPort.ReadLine();                                                               //read   
+                    Dispatcher.BeginInvoke(DispatcherPriority.Send, new newComDataEventHandler(parseDataReceived), receivedText); //invoke newData asynchronously from mainthread to add the data
                 }
-                
             }
             catch (TimeoutException)
             {
@@ -378,52 +364,58 @@ namespace SaveLoadNS
                 statusBarItem1.Content = "Not connected";
                 serialPort.Close(); //prevent serial port from receiving new error
             }
+
+
+            COMReadLine.Set();      //allow access to serialPort i.e. serialPort.Close();
+            Thread.Sleep(0);        //release execution for waiting close
         }
 
-        /// <summary> Update Timer
-        /// starts timer to update plot
+        /// <summary> Init update timer
         /// </summary>
-        private void initUpdateTimer()
+        private void updateTimerDataReceived()
         {
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromMilliseconds(20);
-            timer.Tick += new EventHandler(timerTick);
+            timer.Tick += new EventHandler(updateDataReceived);
             timer.Start();
         }
 
-        /// <summary> timerTick
-        /// Create something to send to the newData() function
+        /// <summary> Updates Plot between intervals
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void timerTick(object sender, EventArgs e)
+        private void updateDataReceived(object sender, EventArgs e)
         {
-            //loop trough all signals
-            foreach (Signal sig in listBoxSignals.Items)
+            foreach (Signal sig in listBoxSignals.Items)    //loop trough all signals
             {
-                //check if signal matches
-                if (sig.seriesTemp.index != -1)
+                if (sig.seriesTemp.index != -1)             //if new items
                 {
                     //temp array to hold all meaningful data
-                    double[] tempData = new double[sig.seriesTemp.index+1];
+                    int items = sig.seriesTemp.index + 1;
+                    double[] tempBuffer = new double[items];
 
                     //copy data to temp
-                    Array.Copy(sig.seriesTemp.buffer, tempData, sig.seriesTemp.index+1);
-                    sig.seriesTemp.index = -1; //empty
+                    Array.Copy(sig.seriesTemp.buffer, tempBuffer, sig.seriesTemp.index+1);
+                    sig.seriesTemp.index -= items; //should be -1
 
                     //add points to the plot
-                    sig.series.Points.Add(tempData);
+                    sig.series.Points.Add(tempBuffer);
                 }
             }
         }
         #endregion
 
-        #region Buttons
-        /// <summary>
-        /// Event for add button
+
+
+
+
+        /* -----------------
+         * 
+         *     BUTTONS
+         *  add/edit/delete
+         *    
+         * -----------------*/
+        #region Button events
+        /// <summary> ADD
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void buttonAddSignal_Click(object sender, RoutedEventArgs e)
         {
             //query new signal
@@ -434,11 +426,8 @@ namespace SaveLoadNS
                 listBoxSignals.Items.Add(tempSig);
         }
 
-        /// <summary>
-        /// Event for edit button
+        /// <summary> EDIT
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void buttonEditSignal_Click(object sender, RoutedEventArgs e)
         {
             if (listBoxSignals.SelectedItems.Count == 1) //only one selected => edit one
@@ -470,11 +459,8 @@ namespace SaveLoadNS
             }
         }
 
-        /// <summary>
-        /// Event for delete button
+        /// <summary> DELETE
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void buttonDeleteSignal_Click(object sender, RoutedEventArgs e)
         {
             List<Signal> toBeDeleted = new List<Signal>();
@@ -494,51 +480,9 @@ namespace SaveLoadNS
 
             toBeDeleted.Clear(); //delete all. If nothing was selected the list should be empty anyways
         }
-        #endregion
 
-        #region Menu items
-        /// <summary>
-        /// Save current plot view to png file
+        /// <summary> CONNECT
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void menuItem_export(object sender, RoutedEventArgs e)
-        {
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Filter = "Image file (.png)|*.png";
-            
-            if (dialog.ShowDialog() == true)
-            {
-                mainChart.SaveImage(dialog.FileName, ChartImageFormat.Png);
-            }
-        }
-
-        /// <summary>
-        /// Save signal
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void menuItem_save(object sender, RoutedEventArgs e)
-        {
-            foreach (Signal sig in listBoxSignals.SelectedItems)
-            {
-                saveLoad.saveSignal(sig);
-            }
-        }
-
-        /// <summary>
-        /// Load signal
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void menuItem_load(object sender, RoutedEventArgs e)
-        {
-            Signal signal = saveLoad.loadSignal();
-            if (signal != null)
-                listBoxSignals.Items.Add(signal);
-        }
-        #endregion
-
         private void buttonCaptureSignal_Click(object sender, RoutedEventArgs e)
         {
             //if open do nothing
@@ -548,7 +492,7 @@ namespace SaveLoadNS
 
             //open selected serial port
             serialPort = new SerialPort();
-            
+
             //TODO add error handling
             serialPort.PortName = comboBoxCOM.SelectedValue as string;
             serialPort.BaudRate = int.Parse(textBoxBaudRate.Text);
@@ -609,7 +553,7 @@ namespace SaveLoadNS
                     serialPort.Handshake = Handshake.None;
                     break;
             }
-            
+
             //Timeout no user value accepted here? 
             serialPort.ReadTimeout = 1000;
 
@@ -621,7 +565,7 @@ namespace SaveLoadNS
             serialPort.NewLine = newLineText;
 
             //register function for data received event
-            serialPort.DataReceived += newComData;
+            serialPort.DataReceived += serialDataReceived;
             //serialPort.ope
 
             //open port
@@ -630,6 +574,8 @@ namespace SaveLoadNS
             statusBarItem1.Content = "Connected";
         }
 
+        /// <summary> DISCONNECT
+        /// </summary>
         private void buttonStopCapture_Click(object sender, RoutedEventArgs e)
         {
             //if open then close
@@ -646,7 +592,53 @@ namespace SaveLoadNS
                 }
             }
         }
+        #endregion
 
+
+
+        /* ------------
+         * 
+         *     MENU
+         *  save/load
+         *  
+         * -----------*/
+        #region Menu functions
+        /// <summary> EXPORT
+        /// </summary>
+        private void menuItem_export(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "Image file (.png)|*.png";
+            
+            if (dialog.ShowDialog() == true)
+            {
+                mainChart.SaveImage(dialog.FileName, ChartImageFormat.Png);
+            }
+        }
+
+        /// <summary> SAVE with properties
+        /// </summary>
+        private void menuItem_save(object sender, RoutedEventArgs e)
+        {
+            foreach (Signal sig in listBoxSignals.SelectedItems)
+            {
+                saveLoad.saveSignal(sig);
+            }
+        }
+
+        /// <summary> LOAD with properties
+        /// </summary>
+        private void menuItem_load(object sender, RoutedEventArgs e)
+        {
+            Signal signal = saveLoad.loadSignal();
+            if (signal != null)
+                listBoxSignals.Items.Add(signal);
+        }
+        #endregion
+
+
+        /// <summary> AUTO BAUDRATE
+        /// </summary>
         private void debugMenuItem_Click(object sender, RoutedEventArgs e)
         {
             autoDetectBaudRate det = new autoDetectBaudRate("COM1");
@@ -658,11 +650,8 @@ namespace SaveLoadNS
         }
 
 
-        /// <summary>
-        /// Check baudRate changes
+        /// <summary> Check baudRate changes
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void baudRate_changed(object sender, RoutedEventArgs e)
         {
             try
@@ -681,11 +670,8 @@ namespace SaveLoadNS
             }
         }
 
-        /// <summary>
-        /// Check dataBit changes
+        /// <summary> Check dataBit changes
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void dataBits_changed(object sender, RoutedEventArgs e)
         {
             try
